@@ -1,3 +1,4 @@
+from rich_argparse import RichHelpFormatter
 from rich.prompt import Confirm
 from pathlib import Path
 from .style import *
@@ -92,7 +93,7 @@ def list_market(args):
     utils.list_plugins(remote_plugins,'插件市场')
 
 def run():
-	parser = argparse.ArgumentParser(prog='llpm', description='LiteLoaderQQNT 包管理器')
+	parser = argparse.ArgumentParser(prog='llpm', description='LiteLoaderQQNT 包管理器',formatter_class=RichHelpFormatter)
 	subparsers = parser.add_subparsers(title='subcommands', dest='subcommand', required=True)
 
 	# 创建 init 子命令的解析器
