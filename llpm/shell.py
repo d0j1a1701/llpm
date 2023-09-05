@@ -10,7 +10,7 @@ remote_plugins = {}
 plugins = {}
 
 def init(args):
-	print(f'llpm: [info]初始化 LiteLoader 数据目录:{root}[/info]')
+	print(f'llpm: [info]初始化 LiteLoader 数据目录: [cyan]{root}[/cyan][/info]')
 	(root / 'llpm.config.json').touch()
 
 def add(args):
