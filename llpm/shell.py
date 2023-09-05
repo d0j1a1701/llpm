@@ -71,7 +71,8 @@ def update(args):
 def remove(args):
 	if plugins.get(args.slug) or args.force:
 		name = plugins[args.slug]["name"] if plugins.get(args.slug) else args.slug
-		plugins.update({args.slug:{'name':args.slug,'slug':args.slug,'version':'<unknown>','author':'<unknown>'}})
+		if not plugins.get(args.slug):
+			plugins.update({args.slug:{'name':args.slug,'slug':args.slug,'version':'<unknown>','author':'<unknown>'}})
 		if Confirm.ask(f'[info]卸载插件 {name}?[/info]'):
 			try:
 				utils.remove_plugin(root/'plugins',plugins[args.slug])

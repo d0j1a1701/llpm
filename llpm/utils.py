@@ -98,6 +98,14 @@ def add_plugin(plugin_folder: Path, manifest: dict):
 	url = get_download_url(manifest)
 	print(f'[info]从 {url} 获取插件...[/info]')
 	downloadFile(url, plugin_folder / slug)
+
+	# 这一坨用于修复直接下载仓库 zip 造成的多套了一层目录的问题
+	direct_download_path = plugin_folder / slug / f'{manifest["repository"]["repo"].split("/")[1]}-{manifest["repository"]["branch"]}'
+	if not (plugin_folder / slug / 'manifest.json').exists() and (direct_download_path / 'manifest.json').exists():
+		(plugin_folder / slug).rename(f'{plugin_folder / slug}-temp')
+		(Path(f'{plugin_folder / slug}-temp') / f'{manifest["repository"]["repo"].split("/")[1]}-{manifest["repository"]["branch"]}').rename(plugin_folder / slug)
+		Path(f'{plugin_folder / slug}-temp').rmdir()
+  
 	print(f'llpm: [cyan]插件 {display_name} 安装完成[/cyan]')
 	if not (plugin_folder / slug / 'manifest.json').exists():
 		print(f'[warning]warning:[/warning] 插件 {manifest["name"]} 安装成功，但是无法读取插件元数据')
