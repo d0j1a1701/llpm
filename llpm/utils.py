@@ -31,17 +31,35 @@ def downloadFile(url: str, to: Path):
 
 PLUGIN_INDEX = 'https://raw.githubusercontent.com/LiteLoaderQQNT/LiteLoaderQQNT-Plugin-List/v3/plugins.json'
 
+import concurrent.futures
+
 def fetch_plugins():
-	plugin_index = requests.get(PLUGIN_INDEX).json()
-	plugins = {}
-	for plugin in track(plugin_index, description="[cyan]更新插件列表中...", transient=True):
+    # 更新单个插件 manifest
+	def fetch_manifest(plugin):
 		try:
 			MANIFEST = f'https://raw.githubusercontent.com/{plugin["repo"]}/{plugin["branch"]}/manifest.json'
 			manifest = requests.get(MANIFEST).json()
-			plugins[manifest['slug']] = manifest
+			return manifest['slug'], manifest
 		except Exception as e:
 			pass
+	
+	plugin_index = requests.get(PLUGIN_INDEX).json()
+	plugins = {}
+	progress_bar = Progress(transient=True)
+	task = progress_bar.add_task('[cyan]更新插件列表中...', total=len(plugin_index))
+	with progress_bar:
+		with concurrent.futures.ThreadPoolExecutor() as executor:
+			future_to_plugin = {executor.submit(fetch_manifest, plugin): plugin for plugin in plugin_index}
+			for future in concurrent.futures.as_completed(future_to_plugin):
+				plugin = future_to_plugin[future]
+				try:
+					slug, manifest = future.result() # type: ignore
+					plugins[slug] = manifest
+					progress_bar.update(task,advance=1)
+				except Exception as e:
+					pass
 	return plugins
+
 
 def load_plugins(plugin_folder: Path):
 	plugins = {}
@@ -67,7 +85,7 @@ def get_download_url(manifest: dict):
 	source_code_url = f"https://github.com/{repo}/archive/refs/heads/{branch}.zip"
 	release_url = release_latest_url if tag == "latest" else release_tag_url
 	url = release_url if use_release else source_code_url
-	return url
+	return '' if not url else url
 
 # 安装插件
 def add_plugin(plugin_folder: Path, manifest: dict):

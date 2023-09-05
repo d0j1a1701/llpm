@@ -10,6 +10,7 @@ remote_plugins = {}
 plugins = {}
 
 def init(args):
+	print(f'llpm: [info]初始化 LiteLoader 数据目录:{root}[/info]')
 	(root / 'llpm.config.json').touch()
 
 def add(args):
@@ -21,10 +22,27 @@ def add(args):
   
 	
 def upgrade(args):
+	if args.slug:
+		if plugins.get(args.slug):
+			if not remote_plugins.get(args.slug):
+				print(f'[error]fetal:[/error] 插件 {args.slug} 不存在')
+				print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
+				return
+			if not utils.version_less(plugins[args.slug]['version'] ,remote_plugins[args.slug]['version']):
+				print(f'llpm: [info]插件 {plugins[args.slug]["name"]} 已是最新版[/info]')
+				return
+			print(f'[info]开始更新插件 {plugins[args.slug]["name"]}[/info]')
+			utils.remove_plugin(root/'plugins',plugins[args.slug])
+			utils.add_plugin(root/'plugins',remote_plugins[args.slug])
+		else:
+			print(f'[error]fetal:[/error] 插件 {args.slug} 未安装')
+		return
 	outdated = []
 	for slug in plugins:
 		remote = remote_plugins.get(slug)
 		plugin = plugins.get(slug)
+		if not remote or not plugin:
+			continue
 		if remote and utils.version_less(plugin['version'],remote['version']):
 			outdated.append(plugin)
 	if not len(outdated):
@@ -68,7 +86,7 @@ def run():
 	subparsers = parser.add_subparsers(title='subcommands', dest='subcommand', required=True)
 
 	# 创建 init 子命令的解析器
-	subparsers.add_parser('init', help='将当前目录初始化为 LiteLoaderQQNT 数据目录')
+	subparsers.add_parser('init', help='将当前目录初始化为 LiteLoader 数据目录')
 
 	# 创建 add 子命令的解析器
 	add_parser = subparsers.add_parser('add', help='安装一个插件')
