@@ -99,6 +99,11 @@ def add_plugin(plugin_folder: Path, manifest: dict):
 	print(f'[info]从 {url} 获取插件...[/info]')
 	downloadFile(url, plugin_folder / slug)
 	print(f'llpm: [cyan]插件 {display_name} 安装完成[/cyan]')
+	if not (plugin_folder / slug / 'manifest.json').exists():
+		print(f'[warning]warning:[/warning] 插件 {manifest["name"]} 安装成功，但是无法读取插件元数据')
+		print(f'[warning]warning:[/warning] 这大概率是因为插件目录结构不规范，但也有可能是下载过程中出现错误')
+		print(f'[warning]warning:[/warning] 可能不会影响 LiteLoader 加载插件，但是会影响 llpm 识别该插件')
+		print(f'[warning]warning:[/warning] 你可以前往插件文件夹自己尝试修复，也可以使用 `llpm remove {manifest["slug"]} --force` 强制卸载该插件')
 
 # 卸载插件
 def remove_plugin(plugin_folder: Path, manifest: dict):

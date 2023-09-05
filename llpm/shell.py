@@ -28,14 +28,18 @@ def upgrade(args):
 				print(f'[error]fetal:[/error] 插件 {args.slug} 不存在')
 				print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
 				return
-			if not utils.version_less(plugins[args.slug]['version'] ,remote_plugins[args.slug]['version']):
+			if (not utils.version_less(plugins[args.slug]['version'] ,remote_plugins[args.slug]['version'])) and not args.force:
 				print(f'llpm: [info]插件 {plugins[args.slug]["name"]} 已是最新版[/info]')
 				return
-			print(f'[info]开始更新插件 {plugins[args.slug]["name"]}[/info]')
+			print(f'llpm: [cyan]开始更新插件 {plugins[args.slug]["name"]}[/cyan]')
 			utils.remove_plugin(root/'plugins',plugins[args.slug])
 			utils.add_plugin(root/'plugins',remote_plugins[args.slug])
+			print(f'llpm: 插件 [bold][cyan]{remote_plugins[args.slug]["name"]}[/cyan][/bold] 更新完成 ([bold][cyan]v{plugins[args.slug]["version"]}[/bold][/cyan] -> [bold][cyan]v{remote_plugins[args.slug]["version"]}[/bold][/cyan])')
 		else:
 			print(f'[error]fetal:[/error] 插件 {args.slug} 未安装')
+		return
+	if args.force:
+		print(f'[error]fetal:[/error] 不能强制更新全部插件')
 		return
 	outdated = []
 	for slug in plugins:
@@ -48,7 +52,7 @@ def upgrade(args):
 	if not len(outdated):
 		print('llpm: [info]所有插件均已是最新版！[/info]')
 		return
-	print(f'llpm: [warning]警告：{len(outdated)} 个插件不是最新版[/warning]')
+	print(f'llpm: [warning]warning:[/warning] {len(outdated)} 个插件不是最新版')
 	for plugin in outdated:
 		print(f'  - {plugin["name"]} [bold][cyan]v{plugin["version"]}[/cyan][/bold] → [bold][cyan]v{remote_plugins[plugin["slug"]]["version"]}[/cyan][/bold]')
 	if Confirm.ask('[info]是否更新以上插件？[/info]'):
@@ -64,8 +68,10 @@ def update(args):
 	print('llpm: [info]插件列表缓存更新完成[/info]')
 
 def remove(args):
-	if plugins.get(args.slug):
-		if Confirm.ask(f'[info]卸载插件 {plugins[args.slug]["name"]}?[/info]'):
+	if plugins.get(args.slug) or args.force:
+		name = plugins[args.slug]["name"] if plugins.get(args.slug) else args.slug
+		plugins.update({args.slug:{'name':args.slug,'slug':args.slug,'version':'<unknown>','author':'<unknown>'}})
+		if Confirm.ask(f'[info]卸载插件 {name}?[/info]'):
 			try:
 				utils.remove_plugin(root/'plugins',plugins[args.slug])
 			except PermissionError as e:
@@ -73,6 +79,10 @@ def remove(args):
 				print(f'[error]fetal:[/error] 请尝试用带管理员权限/ root 账户的终端卸载')
 	else:
 		print(f'[error]fetal:[/error] 插件 {args.slug} 未安装')
+		if (root/'plugins'/args.slug).exists():
+			print(f'[warning]warning:[/warning] llpm 的注册插件列表中找不到 {args.slug}，但是插件目录中存在名为 {args.slug} 的文件夹')
+			print(f'[warning]warning:[/warning] 这可能是因为该插件的目录结构不规范，llpm 无法解析，你可以尝试自己处理或强制卸载该插件')
+			print(f'[warning]warning:[/warning] 使用命令 `llpm remove {args.slug} --force` 强制卸载该插件')
 	
 
 def list_plugins(args):
@@ -95,6 +105,7 @@ def run():
 	# 创建 upgrade 子命令的解析器
 	upgrade_parser = subparsers.add_parser('upgrade', help='更新一个插件')
 	upgrade_parser.add_argument('slug', nargs='?', help='需要更新的插件名称')
+	upgrade_parser.add_argument('--force', action='store_true', help='强制更新一个插件')
 
 	# 创建 update 子命令的解析器
 	subparsers.add_parser('update', help='更新本地插件列表缓存')
@@ -102,6 +113,7 @@ def run():
 	# 创建 remove 子命令的解析器
 	remove_parser = subparsers.add_parser('remove', help='卸载一个插件')
 	remove_parser.add_argument('slug', help='需要卸载的插件名称')
+	remove_parser.add_argument('--force', action='store_true', help='强制卸载一个插件')
 
 	# 创建 list 子命令的解析器
 	subparsers.add_parser('list', help='列出当前插件列表')
