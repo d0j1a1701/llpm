@@ -77,7 +77,7 @@ def version_less(a:str,b:str):
 def get_download_url(manifest: dict):
 	repo = manifest['repository']['repo']
 	branch = manifest['repository']['branch']
-	use_release = manifest['repository']['use_release']
+	use_release = manifest['repository'].get('use_release')
 	tag = use_release.get('tag') if use_release else None
 	name = use_release.get('name') if use_release else None
 	release_latest_url = f"https://github.com/{repo}/releases/{tag}/download/{name}" if tag and name else None
