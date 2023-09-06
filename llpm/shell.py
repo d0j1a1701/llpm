@@ -84,7 +84,8 @@ def remove(args):
 		print(f'[error]fetal:[/error] 插件 {args.slug} 未安装')
 		if (root/'plugins'/args.slug).exists():
 			print(f'[warning]warning:[/warning] llpm 的注册插件列表中找不到 {args.slug}，但是插件目录中存在名为 {args.slug} 的文件夹')
-			print(f'[warning]warning:[/warning] 这可能是因为该插件的目录结构不规范，llpm 无法解析，你可以尝试自己处理或强制卸载该插件')
+			print(f'[warning]warning:[/warning] 这可能是因为该插件的目录结构不规范，llpm 无法解析，你可以尝试自动修复、手动处理或强制卸载该插件')
+			print(f'[warning]warning:[/warning] 使用命令 `llpm audit` 尝试自动修复')
 			print(f'[warning]warning:[/warning] 使用命令 `llpm remove {args.slug} --force` 强制卸载该插件')
 	
 

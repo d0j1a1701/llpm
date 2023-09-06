@@ -153,8 +153,9 @@ def validate_manifest(manifest: dict):
 # 检查并修复插件目录下可能存在的错误
 def audit(plugins_folder: Path, fix: bool):
 	error_cnt = 0
-	need_rename = []
+	need_rename,need_remove = [],[]
 	with Status('[cyan]正在检查插件目录...[/cyan]') as status:
+		# 元数据标识符与目录名不同步
 		for manifest_path in plugins_folder.glob('**/manifest.json'):
 			with open(manifest_path, 'r', encoding='utf-8') as f:
 				manifest = json.load(f)
@@ -163,6 +164,12 @@ def audit(plugins_folder: Path, fix: bool):
 						print(f'llpm: [warning]warning:[/warning] 插件 [bold][cyan]{manifest["name"]}({manifest["slug"]})[/cyan][/bold] 的元数据标识符与目录名不同步')
 						error_cnt += 1
 						need_rename.append((manifest_path.parent, plugins_folder / manifest['slug']))
+		# 空目录
+		for child_dictionary in plugins_folder.glob('*/'):
+			if child_dictionary.is_dir() and len(list(child_dictionary.iterdir())) == 0:
+				print(f'llpm: [warning]warning:[/warning] 检测到空目录 {child_dictionary}')
+				error_cnt += 1
+				need_remove.append(child_dictionary)
 		print(f'llpm: [info]检查完成[/info]')
 		if error_cnt and fix:
 			print(f'llpm: [cyan]尝试自动修复 {error_cnt} 个错误...[/cyan]')
@@ -171,6 +178,15 @@ def audit(plugins_folder: Path, fix: bool):
 				try:
 					print(f'llpm: [info]重命名 "{old_path}" 为 "{new_path}"[/info]')
 					old_path.rename(new_path)
+					error_cnt -= 1
+				except Exception as e:
+					print(f'llpm: [error]error:[/error] 修复失败')
+					print(e)
+					pass
+			for path in need_remove:
+				try:
+					print(f'llpm: [info]删除目录 "{path}"[/info]')
+					path.rmdir()
 					error_cnt -= 1
 				except Exception as e:
 					print(f'llpm: [error]error:[/error] 修复失败')
