@@ -15,29 +15,34 @@ def init(args):
 	(root / 'llpm.config.json').touch()
 
 def add(args):
-	if remote_plugins.get(args.slug):
-		utils.add_plugin(root/'plugins',remote_plugins[args.slug])
-	else:
-		print(f'[error]fetal:[/error] 插件 {args.slug} 不存在')
-		print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
-  
+	def add_inner(slug):
+		if remote_plugins.get(slug):
+			utils.add_plugin(root/'plugins',remote_plugins[slug])
+		else:
+			print(f'[error]fetal:[/error] 插件 {slug} 不存在')
+			print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
+	for slug in args.slug:
+		add_inner(slug)
 	
 def upgrade(args):
 	if args.slug:
-		if plugins.get(args.slug):
-			if not remote_plugins.get(args.slug):
-				print(f'[error]fetal:[/error] 插件 {args.slug} 不存在')
-				print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
-				return
-			if (not utils.version_less(plugins[args.slug]['version'] ,remote_plugins[args.slug]['version'])) and not args.force:
-				print(f'llpm: [info]插件 {plugins[args.slug]["name"]} 已是最新版[/info]')
-				return
-			print(f'llpm: [cyan]开始更新插件 {plugins[args.slug]["name"]}[/cyan]')
-			utils.remove_plugin(root/'plugins',plugins[args.slug])
-			utils.add_plugin(root/'plugins',remote_plugins[args.slug])
-			print(f'llpm: 插件 [bold][cyan]{remote_plugins[args.slug]["name"]}[/cyan][/bold] 更新完成 ([bold][cyan]v{plugins[args.slug]["version"]}[/bold][/cyan] -> [bold][cyan]v{remote_plugins[args.slug]["version"]}[/bold][/cyan])')
-		else:
-			print(f'[error]fetal:[/error] 插件 {args.slug} 未安装')
+		def upgrade_inner(slug):
+			if plugins.get(slug):
+				if not remote_plugins.get(slug):
+					print(f'[error]fetal:[/error] 插件 {slug} 不存在')
+					print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
+					return
+				if (not utils.version_less(plugins[slug]['version'] ,remote_plugins[slug]['version'])) and not args.force:
+					print(f'llpm: [info]插件 {plugins[slug]["name"]} 已是最新版[/info]')
+					return
+				print(f'llpm: [cyan]开始更新插件 {plugins[slug]["name"]}[/cyan]')
+				utils.remove_plugin(root/'plugins',plugins[slug])
+				utils.add_plugin(root/'plugins',remote_plugins[slug])
+				print(f'llpm: 插件 [bold][cyan]{remote_plugins[slug]["name"]}[/cyan][/bold] 更新完成 ([bold][cyan]v{plugins[slug]["version"]}[/bold][/cyan] -> [bold][cyan]v{remote_plugins[slug]["version"]}[/bold][/cyan])')
+			else:
+				print(f'[error]fetal:[/error] 插件 {slug} 未安装')
+		for slug in args.slug:
+			upgrade_inner(slug)
 		return
 	if args.force:
 		print(f'[error]fetal:[/error] 不能强制更新全部插件')
@@ -69,25 +74,27 @@ def update(args):
 	print('llpm: [info]插件列表缓存更新完成[/info]')
 
 def remove(args):
-	if plugins.get(args.slug) or args.force:
-		name = plugins[args.slug]["name"] if plugins.get(args.slug) else args.slug
-		if not plugins.get(args.slug):
-			plugins.update({args.slug:{'name':args.slug,'slug':args.slug,'version':'<unknown>','author':'<unknown>'}})
-		if Confirm.ask(f'llpm: [info]卸载插件 {name}?[/info]'):
-			try:
-				utils.remove_plugin(root/'plugins',plugins[args.slug])
-			except PermissionError as e:
-				print(f'[error]fetal:[/error] 卸载失败：权限不足')
-				print(f'[error]fetal:[/error] 请尝试用带管理员权限/ root 账户的终端卸载')
-				print(f'[error]fetal:[/error] 或结束 QQ 进程后重试')
-	else:
-		print(f'[error]fetal:[/error] 插件 {args.slug} 未安装')
-		if (root/'plugins'/args.slug).exists():
-			print(f'[warning]warning:[/warning] llpm 的注册插件列表中找不到 {args.slug}，但是插件目录中存在名为 {args.slug} 的文件夹')
-			print(f'[warning]warning:[/warning] 这可能是因为该插件的目录结构不规范，llpm 无法解析，你可以尝试自动修复、手动处理或强制卸载该插件')
-			print(f'[warning]warning:[/warning] 使用命令 `llpm audit` 尝试自动修复')
-			print(f'[warning]warning:[/warning] 使用命令 `llpm remove {args.slug} --force` 强制卸载该插件')
-	
+	def remove_inner(slug):
+		if plugins.get(slug) or args.force:
+			name = plugins[slug]["name"] if plugins.get(slug) else slug
+			if not plugins.get(slug):
+				plugins.update({slug:{'name':slug,'slug':slug,'version':'<unknown>','author':'<unknown>'}})
+			if Confirm.ask(f'llpm: [info]卸载插件 {name}?[/info]'):
+				try:
+					utils.remove_plugin(root/'plugins',plugins[slug])
+				except PermissionError as e:
+					print(f'[error]fetal:[/error] 卸载失败：权限不足')
+					print(f'[error]fetal:[/error] 请尝试用带管理员权限/ root 账户的终端卸载')
+					print(f'[error]fetal:[/error] 或结束 QQ 进程后重试')
+		else:
+			print(f'[error]fetal:[/error] 插件 {slug} 未安装')
+			if (root/'plugins'/slug).exists():
+				print(f'[warning]warning:[/warning] llpm 的注册插件列表中找不到 {slug}，但是插件目录中存在名为 {slug} 的文件夹')
+				print(f'[warning]warning:[/warning] 这可能是因为该插件的目录结构不规范，llpm 无法解析，你可以尝试自动修复、手动处理或强制卸载该插件')
+				print(f'[warning]warning:[/warning] 使用命令 `llpm audit` 尝试自动修复')
+				print(f'[warning]warning:[/warning] 使用命令 `llpm remove {slug} --force` 强制卸载该插件')
+	for slug in args.slug:
+		remove_inner(slug)
 
 def list_plugins(args):
     utils.list_plugins(plugins,'本地插件列表')
@@ -107,11 +114,11 @@ def run():
 
 	# 创建 add 子命令的解析器
 	add_parser = subparsers.add_parser('add', help='安装一个插件')
-	add_parser.add_argument('slug', help='需要安装的插件名称')
+	add_parser.add_argument('slug', nargs='+', help='需要安装的插件名称')
 
 	# 创建 upgrade 子命令的解析器
 	upgrade_parser = subparsers.add_parser('upgrade', help='更新一个插件')
-	upgrade_parser.add_argument('slug', nargs='?', help='需要更新的插件名称')
+	upgrade_parser.add_argument('slug', nargs='*', help='需要更新的插件名称')
 	upgrade_parser.add_argument('--force', action='store_true', help='强制更新一个插件')
 
 	# 创建 update 子命令的解析器
@@ -119,7 +126,7 @@ def run():
 
 	# 创建 remove 子命令的解析器
 	remove_parser = subparsers.add_parser('remove', help='卸载一个插件')
-	remove_parser.add_argument('slug', help='需要卸载的插件名称')
+	remove_parser.add_argument('slug', nargs='+', help='需要卸载的插件名称')
 	remove_parser.add_argument('--force', action='store_true', help='强制卸载一个插件')
 
 	# 创建 list 子命令的解析器
