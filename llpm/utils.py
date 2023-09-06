@@ -1,4 +1,5 @@
 from rich.progress import Progress,track
+from rich.status import Status
 from rich.table import Table
 from zipfile import ZipFile
 from shutil import rmtree
@@ -61,9 +62,9 @@ def fetch_plugins():
 	return plugins
 
 
-def load_plugins(plugin_folder: Path):
+def load_plugins(plugins_folder: Path):
 	plugins = {}
-	for manifest in track(plugin_folder.glob('*/manifest.json'), description="[cyan]获取本地插件中...", transient=True):
+	for manifest in track(plugins_folder.glob('*/manifest.json'), description="[cyan]获取本地插件中...", transient=True):
 		with open(manifest, 'r', encoding='utf-8') as f:
 			manifest = json.load(f)
 			plugins[manifest['slug']] = manifest
@@ -88,40 +89,41 @@ def get_download_url(manifest: dict):
 	return '' if not url else url
 
 # 安装插件
-def add_plugin(plugin_folder: Path, manifest: dict):
+def add_plugin(plugins_folder: Path, manifest: dict):
 	slug = manifest['slug']
 	display_name = f'[bold]{manifest["name"]} v{manifest["version"]}[/bold]'
-	if (plugin_folder / slug).exists():
+	if (plugins_folder / slug).exists():
 		print(f'[error]fetal:[/error] 插件 {manifest["name"]} 已安装')
 		return
 	print(f'[info]开始安装插件 {display_name}[/info]')
 	url = get_download_url(manifest)
 	print(f'[info]从 {url} 获取插件...[/info]')
-	downloadFile(url, plugin_folder / slug)
+	downloadFile(url, plugins_folder / slug)
 
 	# 这一坨用于修复直接下载仓库 zip 造成的多套了一层目录的问题
-	direct_download_path = plugin_folder / slug / f'{manifest["repository"]["repo"].split("/")[1]}-{manifest["repository"]["branch"]}'
-	if not (plugin_folder / slug / 'manifest.json').exists() and (direct_download_path / 'manifest.json').exists():
-		(plugin_folder / slug).rename(f'{plugin_folder / slug}-temp')
-		(Path(f'{plugin_folder / slug}-temp') / f'{manifest["repository"]["repo"].split("/")[1]}-{manifest["repository"]["branch"]}').rename(plugin_folder / slug)
-		Path(f'{plugin_folder / slug}-temp').rmdir()
+	direct_download_path = plugins_folder / slug / f'{manifest["repository"]["repo"].split("/")[1]}-{manifest["repository"]["branch"]}'
+	if not (plugins_folder / slug / 'manifest.json').exists() and (direct_download_path / 'manifest.json').exists():
+		(plugins_folder / slug).rename(f'{plugins_folder / slug}-temp')
+		(Path(f'{plugins_folder / slug}-temp') / f'{manifest["repository"]["repo"].split("/")[1]}-{manifest["repository"]["branch"]}').rename(plugins_folder / slug)
+		Path(f'{plugins_folder / slug}-temp').rmdir()
   
 	print(f'llpm: [cyan]插件 {display_name} 安装完成[/cyan]')
-	if not (plugin_folder / slug / 'manifest.json').exists():
+	if not (plugins_folder / slug / 'manifest.json').exists():
 		print(f'[warning]warning:[/warning] 插件 {manifest["name"]} 安装成功，但是无法读取插件元数据')
 		print(f'[warning]warning:[/warning] 这大概率是因为插件目录结构不规范，但也有可能是下载过程中出现错误')
 		print(f'[warning]warning:[/warning] 可能不会影响 LiteLoader 加载插件，但是会影响 llpm 识别该插件')
-		print(f'[warning]warning:[/warning] 你可以前往插件文件夹自己尝试修复，也可以使用 `llpm remove {manifest["slug"]} --force` 强制卸载该插件')
+		print(f'[warning]warning:[/warning] 你可以前往插件文件夹尝试手动修复，也可以使用 `llpm remove {manifest["slug"]} --force` 强制卸载该插件')
+		print(f'[warning]warning:[/warning] 或使用 `llpm audit` 尝试自动修复')
 
 # 卸载插件
-def remove_plugin(plugin_folder: Path, manifest: dict):
+def remove_plugin(plugins_folder: Path, manifest: dict):
 	slug = manifest['slug']
 	display_name = f'[bold]{manifest["name"]} v{manifest["version"]}[/bold]'
-	if not (plugin_folder / slug).exists():
+	if not (plugins_folder / slug).exists():
 		print(f'[error]fetal:[/error] 插件 {manifest["name"]} 未安装')
 		return
 	print(f'[info]开始卸载插件 {display_name}[/info]')
-	rmtree(plugin_folder / slug)
+	rmtree(plugins_folder / slug)
 	print(f'llpm: [cyan]插件 {display_name} 卸载完成[/cyan]')
 
 def merge_author(author: list):
@@ -144,3 +146,42 @@ def list_plugins(plugins: dict, title: str):
 	print(table)
 	print(f'llpm: [info]共 {len(plugins)} 个插件[/info]')
 	print('llpm: [info]使用 `llpm add <标识符>` 安装插件[/info]')
+
+def validate_manifest(manifest: dict):
+    return manifest.get('manifest_version',-1) == 3 and manifest.get('name') and manifest.get('slug') and manifest.get('version') and manifest.get('author') and manifest.get('repository') and manifest.get('platform') and manifest.get('injects')
+
+# 检查并修复插件目录下可能存在的错误
+def audit(plugins_folder: Path, fix: bool):
+	error_cnt = 0
+	need_rename = []
+	with Status('[cyan]正在检查插件目录...[/cyan]') as status:
+		for manifest_path in plugins_folder.glob('**/manifest.json'):
+			with open(manifest_path, 'r', encoding='utf-8') as f:
+				manifest = json.load(f)
+				if validate_manifest(manifest):
+					if manifest_path.parent != plugins_folder / manifest['slug']:
+						print(f'llpm: [warning]warning:[/warning] 插件 [bold][cyan]{manifest["name"]}({manifest["slug"]})[/cyan][/bold] 的元数据标识符与目录名不同步')
+						error_cnt += 1
+						need_rename.append((manifest_path.parent, plugins_folder / manifest['slug']))
+		print(f'llpm: [info]检查完成[/info]')
+		if error_cnt and fix:
+			print(f'llpm: [cyan]尝试自动修复 {error_cnt} 个错误...[/cyan]')
+			status.update(f'[cyan]正在自动修复...[/cyan]')	
+			for old_path, new_path in need_rename:
+				try:
+					print(f'llpm: [info]重命名 "{old_path}" 为 "{new_path}"[/info]')
+					old_path.rename(new_path)
+					error_cnt -= 1
+				except Exception as e:
+					print(f'llpm: [error]error:[/error] 修复失败')
+					print(e)
+					pass
+			
+	if error_cnt > 0:
+		print(f'llpm: [warning]warning:[/warning] 审计模块检测到 {error_cnt} 个错误')
+		if not fix:
+			print(f'llpm: [warning]warning:[/warning] 可以使用命令 `llpm audit --fix` 来尝试自动修复这些错误')
+		else:
+			print(f'llpm: [error]error:[/error] 自动修复失败')
+	else:
+		print(f'llpm: [cyan]审计模块未检测到错误[/cyan]')

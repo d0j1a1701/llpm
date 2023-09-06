@@ -73,12 +73,13 @@ def remove(args):
 		name = plugins[args.slug]["name"] if plugins.get(args.slug) else args.slug
 		if not plugins.get(args.slug):
 			plugins.update({args.slug:{'name':args.slug,'slug':args.slug,'version':'<unknown>','author':'<unknown>'}})
-		if Confirm.ask(f'[info]卸载插件 {name}?[/info]'):
+		if Confirm.ask(f'llpm: [info]卸载插件 {name}?[/info]'):
 			try:
 				utils.remove_plugin(root/'plugins',plugins[args.slug])
 			except PermissionError as e:
 				print(f'[error]fetal:[/error] 卸载失败：权限不足')
 				print(f'[error]fetal:[/error] 请尝试用带管理员权限/ root 账户的终端卸载')
+				print(f'[error]fetal:[/error] 或结束 QQ 进程后重试')
 	else:
 		print(f'[error]fetal:[/error] 插件 {args.slug} 未安装')
 		if (root/'plugins'/args.slug).exists():
@@ -92,6 +93,9 @@ def list_plugins(args):
 
 def list_market(args):
     utils.list_plugins(remote_plugins,'插件市场')
+
+def audit(args):
+	utils.audit(root/'plugins',args.fix)
 
 def run():
 	parser = argparse.ArgumentParser(prog='llpm', description='LiteLoaderQQNT 包管理器',formatter_class=RichHelpFormatter)
@@ -122,6 +126,10 @@ def run():
  
 	# 创建 market 子命令的解析器
 	subparsers.add_parser('market', help='展示插件市场')
+
+	# 创建 audit 子命令的解析器
+	audit_parser = subparsers.add_parser('audit', help='检查插件目录下可能存在的错误')
+	audit_parser.add_argument('--fix', action='store_true', help='修复查找到的错误')
 
 	args = parser.parse_args()
 
@@ -156,3 +164,5 @@ def run():
 		list_plugins(args)
 	elif args.subcommand == 'market':
 		list_market(args)
+	elif args.subcommand == 'audit':
+		audit(args)
