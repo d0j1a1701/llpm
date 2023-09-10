@@ -12,9 +12,23 @@ remote_plugins = {}
 plugins = {}
 
 def add(args):
-	def add_inner(slug):
+	def add_inner(slug:str):
+		specify_version = slug.count('@')
+		(slug,version) = slug.split('@') if specify_version else (slug,'latest')
 		if remote_plugins.get(slug):
-			utils.add_plugin(root/'plugins',remote_plugins[slug])
+			_version = version
+			if _version == 'latest':
+				_version = remote_plugins[slug]['version']
+			if specify_version and not remote_plugins[slug]['repository'].get('use_release'):
+				print(f'[error]fetal:[/error] 使用 repo clone 方式下载的插件不支持指定版本')
+				return
+			if plugins.get(slug) and plugins[slug]['version'] == _version:
+				print(f'[error]fetal:[/error] 插件 {plugins[slug]["name"]} 已安装')
+				return
+			if specify_version:
+				utils.add_plugin(root/'plugins',remote_plugins[slug],version)
+			else:
+				utils.add_plugin(root/'plugins',remote_plugins[slug])
 		else:
 			print(f'[error]fetal:[/error] 插件 {slug} 不存在')
 			print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件市场缓存')

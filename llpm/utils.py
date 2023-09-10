@@ -75,12 +75,14 @@ def version_less(a:str,b:str):
 	return [int(i) for i in a.split('.')] < [int(i) for i in b.split('.')]
 
 # 获取插件下载链接
-def get_download_url(manifest: dict):
+def get_download_url(manifest: dict,version: str=''):
 	repo = manifest['repository']['repo']
 	branch = manifest['repository']['branch']
 	use_release = manifest['repository'].get('use_release')
 	tag = use_release.get('tag') if use_release else None
 	name = use_release.get('name') if use_release else None
+	if version:
+		tag = version
 	release_latest_url = f"https://github.com/{repo}/releases/{tag}/download/{name}" if tag and name else None
 	release_tag_url = f"https://github.com/{repo}/releases/download/{tag}/{name}" if tag and name else None
 	source_code_url = f"https://github.com/{repo}/archive/refs/heads/{branch}.zip"
@@ -89,15 +91,17 @@ def get_download_url(manifest: dict):
 	return '' if not url else url
 
 # 安装插件
-def add_plugin(plugins_folder: Path, manifest: dict):
+def add_plugin(plugins_folder: Path, manifest: dict, version=None):
 	slug = manifest['slug']
-	display_name = f'[bold]{manifest["name"]} v{manifest["version"]}[/bold]'
-	if (plugins_folder / slug).exists():
-		print(f'[error]fetal:[/error] 插件 {manifest["name"]} 已安装')
-		return
+	display_name = f'[bold]{manifest["name"]}@{version}[/bold]' if version else f'[bold]{manifest["name"]}@{manifest["version"]}[/bold]'
 	print(f'[info]开始安装插件 {display_name}[/info]')
-	url = get_download_url(manifest)
+	url = get_download_url(manifest,version) if version else get_download_url(manifest)
 	print(f'[info]从 {url} 获取插件...[/info]')
+
+	if Path(plugins_folder / slug).exists():
+		print('[info]切换版本：删除原有插件[/info]')
+		rmtree(plugins_folder / slug)
+ 
 	downloadFile(url, plugins_folder / slug)
 
 	# 这一坨用于修复直接下载仓库 zip 造成的多套了一层目录的问题
@@ -118,7 +122,7 @@ def add_plugin(plugins_folder: Path, manifest: dict):
 # 卸载插件
 def remove_plugin(plugins_folder: Path, manifest: dict):
 	slug = manifest['slug']
-	display_name = f'[bold]{manifest["name"]} v{manifest["version"]}[/bold]'
+	display_name = f'[bold]{manifest["name"]}@{manifest["version"]}[/bold]'
 	if not (plugins_folder / slug).exists():
 		print(f'[error]fetal:[/error] 插件 {manifest["name"]} 未安装')
 		return
