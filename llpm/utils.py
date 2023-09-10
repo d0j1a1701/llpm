@@ -142,7 +142,7 @@ def list_plugins(plugins: dict, title: str):
 	table.add_column('标识符',justify='left',no_wrap=True,style="green")
 	for slug in plugins:
 		author = merge_author(plugins[slug]['author']) if type(plugins[slug]['author']) == list else plugins[slug]['author']['name']
-		table.add_row(plugins[slug]['name'],plugins[slug]['description'],plugins[slug]['version'],author,plugins[slug]['slug'])
+		table.add_row(f'[link=https://github.com/{plugins[slug]["repository"]["repo"]}]{plugins[slug]["name"]}[/link]',plugins[slug]['description'],plugins[slug]['version'],author,plugins[slug]['slug'])
 	print(table)
 	print(f'llpm: [info]共 {len(plugins)} 个插件[/info]')
 	print('llpm: [info]使用 `llpm add <标识符>` 安装插件[/info]')

@@ -17,7 +17,7 @@ def add(args):
 			utils.add_plugin(root/'plugins',remote_plugins[slug])
 		else:
 			print(f'[error]fetal:[/error] 插件 {slug} 不存在')
-			print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
+			print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件市场缓存')
 	for slug in args.slug:
 		add_inner(slug)
 	
@@ -27,7 +27,7 @@ def upgrade(args):
 			if plugins.get(slug):
 				if not remote_plugins.get(slug):
 					print(f'[error]fetal:[/error] 插件 {slug} 不存在')
-					print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件列表缓存')
+					print(f'[error]fetal:[/error] 请尝试使用 `llpm update` 更新插件市场缓存')
 					return
 				if (not utils.version_less(plugins[slug]['version'] ,remote_plugins[slug]['version'])) and not args.force:
 					print(f'llpm: [info]插件 {plugins[slug]["name"]} 已是最新版[/info]')
@@ -68,7 +68,7 @@ def upgrade(args):
 def update(args):
 	with open(root/'llpm.market.json','w',encoding='utf-8') as f:
 		json.dump(utils.fetch_plugins(), f,ensure_ascii=False)
-	print('llpm: [info]插件列表缓存更新完成[/info]')
+	print('llpm: [info]插件市场缓存更新完成[/info]')
 
 def remove(args):
 	def remove_inner(slug):
