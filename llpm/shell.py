@@ -5,14 +5,11 @@ from .style import *
 from . import utils
 import argparse
 import json
+import os
 
-root = Path.cwd()
+root = Path(os.environ.get('LITELOADERQQNT_PROFILE',''))
 remote_plugins = {}
 plugins = {}
-
-def init(args):
-	print(f'llpm: [info]初始化 LiteLoader 数据目录: [cyan]{root}[/cyan][/info]')
-	(root / 'llpm.config.json').touch()
 
 def add(args):
 	def add_inner(slug):
@@ -107,10 +104,7 @@ def audit(args):
 
 def run():
 	parser = argparse.ArgumentParser(prog='llpm', description='LiteLoaderQQNT 包管理器',formatter_class=RichHelpFormatter)
-	subparsers = parser.add_subparsers(title='subcommands', dest='subcommand', required=True)
-
-	# 创建 init 子命令的解析器
-	subparsers.add_parser('init', help='将当前目录初始化为 LiteLoader 数据目录')
+	subparsers = parser.add_subparsers(title='subcommands', dest='subcommand')
 
 	# 创建 add 子命令的解析器
 	add_parser = subparsers.add_parser('add', help='安装一个插件')
@@ -141,16 +135,37 @@ def run():
 
 	args = parser.parse_args()
 
-	if args.subcommand != 'init' and not (root / 'llpm.config.json').exists():
-		print('[error]fetal:[/error] LiteLoader 数据目录未定义')
-		print('[error]fetal:[/error] 请在 LiteLoader 数据目录下运行 `llpm init` 以确定数据目录')
+	if not args.subcommand:
+		print(r'''[cyan]  _      _      _____  __  __ 
+ | |    | |    |  __ \|  \/  |
+ | |    | |    | |__) | \  / |
+ | |    | |    |  ___/| |\/| |
+ | |____| |____| |    | |  | |
+ |______|______|_|    |_|  |_|
+[/cyan]''')
+		print('[cyan]llpm[/cyan]: [cyan]L[/cyan]ite[cyan]L[/cyan]oader [cyan]P[/cyan]ackage [cyan]M[/cyan]anager')
+		print('[info]由 [link=https://github.com/d0j1a1701]@d0j1a1701[/link] 开发的适用于 [link=https://llqqnt.mukapp.top]LiteLoaderQQNT[/link] 的开源插件管理器[/info]')
+		print('[cyan]代码仓库:[/cyan] [info][link=https://github.com/d0j1a1701/llpm]d0j1a1701/llpm[/link][/info]')
+		return 0
+
+	if not (root / 'config.json').exists():
+		print('llpm: [error]fetal:[/error] LiteLoader 数据目录未定义')
+		print('llpm: [info]请先安装 LiteLoaderQQNT 并使其至少成功启动一次[/info]')
+		print('[cyan]代码仓库:[/cyan] [info][link=https://github.com/LiteLoaderQQNT/LiteLoaderQQNT]mo-jinran/LiteLoaderQQNT[/link][/info]')
+		print('[cyan]官方网站:[/cyan] [info][link=https://llqqnt.mukapp.top]llqqnt.mukapp.top[/link][/info]')
+		print('[cyan]官方群聊:[/cyan] [info][link=https://t.me/LiteLoaderQQNT]Telegram/@LiteLoaderQQNT[/link][/info]')
 		return 1
 
 	# 加载远端插件
 	global remote_plugins
 	if (root / 'llpm.market.json').exists():
-		with open(root/'llpm.market.json','r',encoding='utf-8') as f:
-			remote_plugins = json.load(f)
+		try:
+			with open(root/'llpm.market.json','r',encoding='utf-8') as f:
+				remote_plugins = json.load(f)
+		except Exception as e:
+			print(f'llpm: [error]error:[/error] 加载插件市场缓存时出现错误: {e}')
+			print(f'llpm: [info]忽略缓存重新加载！[/info]')
+			update(args)
 	else:
 		update(args)
 
@@ -158,9 +173,7 @@ def run():
 	global plugins
 	plugins = utils.load_plugins(root/'plugins')
 
-	if args.subcommand == 'init':
-		init(args)
-	elif args.subcommand == 'add':
+	if args.subcommand == 'add':
 		add(args)
 	elif args.subcommand == 'upgrade':
 		upgrade(args)
