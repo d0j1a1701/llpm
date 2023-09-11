@@ -10,6 +10,24 @@ import requests
 import json
 import os
 
+import platform
+import ctypes
+
+def documentPath():
+    if platform.system() == 'Windows':
+        # When on Windows, use the shell api to get the path
+        CSIDL_PERSONAL = 5  # Code for 'My Documents'
+        SHGFP_TYPE_CURRENT = 0  # Get current, not default value
+
+        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, SHGFP_TYPE_CURRENT, buf)
+
+        return buf.value
+    else:
+        # For Linux/Mac
+        return os.path.expanduser('~/Documents')
+
+
 # 从 url 下载 zip 并解压到 to
 def downloadFile(url: str, to: Path):
 	with tempfile.TemporaryDirectory() as tmp_dir:
