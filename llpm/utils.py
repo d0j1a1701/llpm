@@ -19,7 +19,7 @@ def downloadFile(url: str, to: Path):
 			total_size_in_bytes = int(r.headers.get('content-length', 0)) if 'content-length' in r.headers else None
 			block_size = 1024  # 1 Kibibyte
 			progress_bar = Progress(transient=True)
-			progress_task = progress_bar.add_task("[cyan]下载中...", total=total_size_in_bytes) if total_size_in_bytes else progress_bar.add_task("[cyan]Downloading...", total=total_size_in_bytes, unknown=True)
+			progress_task = progress_bar.add_task("[cyan]下载中...", total=total_size_in_bytes) if total_size_in_bytes else progress_bar.add_task("[cyan]下载中...", total=total_size_in_bytes, unknown=True)
 			with progress_bar:
 				with open(local_zip, 'wb') as f:
 					for chunk in r.iter_content(block_size):
