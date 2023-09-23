@@ -3,3 +3,4 @@ dist/
 shell.build/
 shell.dist/
 shell.onefile-build/
+.vscode/

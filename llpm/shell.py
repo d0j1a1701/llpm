@@ -7,7 +7,7 @@ import argparse
 import json
 import os
 
-root = Path(os.environ.get('LITELOADERQQNT_PROFILE',''))
+root = Path(os.environ.get('LITELOADERQQNT_PROFILE',Path(utils.documentPath()) / 'LiteLoaderQQNT'))
 remote_plugins = {}
 plugins = {}
 
@@ -139,7 +139,7 @@ def run():
 
 	# 创建 list 子命令的解析器
 	subparsers.add_parser('list', help='列出当前插件列表')
- 
+
 	# 创建 market 子命令的解析器
 	subparsers.add_parser('market', help='展示插件市场')
 
