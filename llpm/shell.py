@@ -120,32 +120,27 @@ def run():
 	parser = argparse.ArgumentParser(prog='llpm', description='LiteLoaderQQNT 包管理器',formatter_class=RichHelpFormatter)
 	subparsers = parser.add_subparsers(title='subcommands', dest='subcommand')
 
-	# 创建 add 子命令的解析器
 	add_parser = subparsers.add_parser('add', help='安装一个插件')
 	add_parser.add_argument('slug', nargs='+', help='需要安装的插件名称')
 
-	# 创建 upgrade 子命令的解析器
 	upgrade_parser = subparsers.add_parser('upgrade', help='更新一个插件')
 	upgrade_parser.add_argument('slug', nargs='*', help='需要更新的插件名称')
 	upgrade_parser.add_argument('--force', action='store_true', help='强制更新一个插件')
 
-	# 创建 update 子命令的解析器
 	subparsers.add_parser('update', help='更新本地插件列表缓存')
 
-	# 创建 remove 子命令的解析器
 	remove_parser = subparsers.add_parser('remove', help='卸载一个插件')
 	remove_parser.add_argument('slug', nargs='+', help='需要卸载的插件名称')
 	remove_parser.add_argument('--force', action='store_true', help='强制卸载一个插件')
 
-	# 创建 list 子命令的解析器
 	subparsers.add_parser('list', help='列出当前插件列表')
 
-	# 创建 market 子命令的解析器
 	subparsers.add_parser('market', help='展示插件市场')
 
-	# 创建 audit 子命令的解析器
 	audit_parser = subparsers.add_parser('audit', help='检查插件目录下可能存在的错误')
 	audit_parser.add_argument('--fix', action='store_true', help='修复查找到的错误')
+
+	subparsers.add_parser('data', help='打开 LiteLoader 数据文件夹')
 
 	args = parser.parse_args()
 
@@ -201,3 +196,5 @@ def run():
 		list_market(args)
 	elif args.subcommand == 'audit':
 		audit(args)
+	elif args.subcommand == 'data':
+		os.startfile(root)
