@@ -165,16 +165,17 @@ def run():
 
 	# 加载远端插件
 	global remote_plugins
-	if (root / 'llpm.market.json').exists():
-		try:
-			with open(root/'llpm.market.json','r',encoding='utf-8') as f:
-				remote_plugins = json.load(f)
-		except Exception as e:
-			print(f'llpm: [error]error:[/error] 加载插件市场缓存时出现错误: {e}')
-			print(f'llpm: [info]忽略缓存重新加载！[/info]')
+	if args.subcommand != 'upgrade':
+		if (root / 'llpm.market.json').exists():
+			try:
+				with open(root/'llpm.market.json','r',encoding='utf-8') as f:
+					remote_plugins = json.load(f)
+			except Exception as e:
+				print(f'llpm: [error]error:[/error] 加载插件市场缓存时出现错误: {e}')
+				print(f'llpm: [info]忽略缓存重新加载！[/info]')
+				update(args)
+		else:
 			update(args)
-	else:
-		update(args)
 
 	# 加载本地插件
 	global plugins

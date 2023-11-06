@@ -19,7 +19,7 @@ def documentPath():
         CSIDL_PERSONAL = 5  # Code for 'My Documents'
         SHGFP_TYPE_CURRENT = 0  # Get current, not default value
 
-        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+        buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH) # type: ignore
         ctypes.windll.shell32.SHGetFolderPathW(None, CSIDL_PERSONAL, None, SHGFP_TYPE_CURRENT, buf)
 
         return buf.value
