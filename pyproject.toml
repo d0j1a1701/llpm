@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "llpm"
-version = "0.4.4"
+version = "0.5.0"
 
 
 description = "适用于 LiteLoaderQQNT 的插件管理器"
