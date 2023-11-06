@@ -48,11 +48,11 @@ def downloadFile(url: str, to: Path):
 			for file_name in track(file_list, description="[cyan]解压中...", transient=True):
 				zip_ref.extract(member=file_name, path=to)
 
-PLUGIN_INDEX = 'https://raw.githubusercontent.com/LiteLoaderQQNT/LiteLoaderQQNT-Plugin-List/v3/plugins.json'
+DEFAULT_PLUGIN_INDEX = 'https://raw.githubusercontent.com/LiteLoaderQQNT/LiteLoaderQQNT-Plugin-List/v3/plugins.json'
 
 import concurrent.futures
 
-def fetch_plugins():
+def fetch_plugins(PLUGIN_INDEX:str=DEFAULT_PLUGIN_INDEX):
     # 更新单个插件 manifest
 	def fetch_manifest(plugin):
 		try:

@@ -77,11 +77,18 @@ def upgrade(args):
 			print(f'[info]开始更新插件 {plugin["name"]}[/info]')
 			utils.remove_plugin(root/'plugins',plugin)
 			utils.add_plugin(root/'plugins',remote_plugins[plugin["slug"]])
+		print(f'llpm: [info]{len(outdated)} 个插件更新完成[/info]')
 
 
 def update(args):
-	with open(root/'llpm.market.json','w',encoding='utf-8') as f:
-		json.dump(utils.fetch_plugins(), f,ensure_ascii=False)
+	if args.index:
+		args.index = args.index[0]
+		print(f'llpm: [info]读取第三方插件源：{args.index}[/info]')
+		with open(root/'llpm.market.json','w',encoding='utf-8') as f:
+			json.dump(utils.fetch_plugins(args.index), f,ensure_ascii=False)
+	else:
+		with open(root/'llpm.market.json','w',encoding='utf-8') as f:
+			json.dump(utils.fetch_plugins(), f,ensure_ascii=False)
 	print('llpm: [info]插件市场缓存更新完成[/info]')
 
 def remove(args):
@@ -125,7 +132,8 @@ def run():
 	upgrade_parser.add_argument('slug', nargs='*', help='需要更新的插件名称')
 	upgrade_parser.add_argument('--force', action='store_true', help='强制更新一个插件')
 
-	subparsers.add_parser('update', help='更新本地插件列表缓存')
+	update_parser = subparsers.add_parser('update', help='更新本地插件列表缓存')
+	update_parser.add_argument('index', nargs='*', help='第三方插件源地址')
 
 	remove_parser = subparsers.add_parser('remove', help='卸载一个插件')
 	remove_parser.add_argument('slug', nargs='+', help='需要卸载的插件名称')
