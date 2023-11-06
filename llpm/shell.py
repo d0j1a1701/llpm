@@ -93,15 +93,13 @@ def remove(args):
 			if Confirm.ask(f'llpm: [info]卸载插件 {name}?[/info]'):
 				try:
 					utils.remove_plugin(root/'plugins',plugins[slug])
-				except PermissionError as e:
-					print(f'[error]fetal:[/error] 卸载失败：权限不足')
-					print(f'[error]fetal:[/error] 请尝试用带管理员权限/ root 账户的终端卸载')
-					print(f'[error]fetal:[/error] 或结束 QQ 进程后重试')
+				except Exception as e:
+					print(f'[error]fetal:[/error] 卸载失败：{e} 请结束 QQ 进程后重试')
+					print(e.with_traceback)
 		else:
 			print(f'[error]fetal:[/error] 插件 {slug} 未安装')
 			if (root/'plugins'/slug).exists():
 				print(f'[warning]warning:[/warning] llpm 的注册插件列表中找不到 {slug}，但是插件目录中存在名为 {slug} 的文件夹')
-				print(f'[warning]warning:[/warning] 这可能是因为该插件的目录结构不规范，llpm 无法解析，你可以尝试自动修复、手动处理或强制卸载该插件')
 				print(f'[warning]warning:[/warning] 使用命令 `llpm audit` 尝试自动修复')
 				print(f'[warning]warning:[/warning] 使用命令 `llpm remove {slug} --force` 强制卸载该插件')
 	for slug in args.slug:
